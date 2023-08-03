@@ -443,6 +443,15 @@ class PodmanPodDiff:
             net_mode_before = net_mode_before.replace('bridge', 'default')
             net_mode_before = net_mode_before.replace('slirp4netns', 'default')
             return self._diff_update_and_compare('network', net_mode_before, net_mode_after)
+        # For 4.4.0+ podman versions with no network specified
+        if not net_mode_after and net_mode_before == 'slirp4netns' and not after:
+            net_mode_after = 'slirp4netns'
+            if before == ['slirp4netns']:
+                after = ['slirp4netns']
+        if not net_mode_after and net_mode_before == 'bridge' and not after:
+            net_mode_after = 'bridge'
+            if before == ['bridge']:
+                after = ['bridge']
         before, after = sorted(list(set(before))), sorted(list(set(after)))
         return self._diff_update_and_compare('network', before, after)
 
@@ -502,7 +511,7 @@ class PodmanPodDiff:
             # TODO: find out why on Ubuntu the 'net' is not present
             if 'net' not in before:
                 after.remove('net')
-        if self.params["uidmap"] or self.params["gidmap"]:
+        if self.params["uidmap"] or self.params["gidmap"] or self.params["userns"]:
             after.append('user')
 
         before, after = sorted(list(set(before))), sorted(list(set(after)))
